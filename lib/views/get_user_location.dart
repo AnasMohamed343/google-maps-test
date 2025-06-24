@@ -76,10 +76,10 @@ class _GetUserLocationState extends State<GetUserLocation> {
   }
 
   void updateMyLocation() async {
-    await locationService.checkAndRequestLocationService();
-    var hasPermission =
-        await locationService.checkAndRequestLocationPermission();
-    if (hasPermission) {
+    // await locationService.checkAndRequestLocationService();
+    // var hasPermission =
+    //     await locationService.checkAndRequestLocationPermission();
+    try {
       locationService.getRealTimeLocationData(
         (locationData) {
           var newLatLng =
@@ -88,9 +88,9 @@ class _GetUserLocationState extends State<GetUserLocation> {
           updateMyRealTimeCamera(newLatLng);
         },
       );
-    } else {
-      // TODO: show a dialog to the user to enable the location permission
-    }
+    } on LocationServiceException catch (e) {
+    } on LocationPermissionException catch (e) {
+    } catch (e) {}
   }
 
   void updateMyRealTimeCamera(LatLng newLatLng) {

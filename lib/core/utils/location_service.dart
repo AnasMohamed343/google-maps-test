@@ -9,31 +9,27 @@ class LocationService {
 
   Location location = Location();
 
-  Future<bool> checkAndRequestLocationService() async {
+  Future<void> checkAndRequestLocationService() async {
     var isServiceEnabled = await location.serviceEnabled();
     if (!isServiceEnabled) {
       isServiceEnabled = await location.requestService();
       if (!isServiceEnabled) {
-        // TODO: show a dialog to the user to enable the location service
-        return false;
+        throw LocationServiceException();
       }
     }
-    return true;
   }
 
-  Future<bool> checkAndRequestLocationPermission() async {
+  Future<void> checkAndRequestLocationPermission() async {
     var permissionStatus = await location.requestPermission();
     if (permissionStatus == PermissionStatus.deniedForever) {
-      return false;
+      throw LocationPermissionException();
     }
     if (permissionStatus == PermissionStatus.denied) {
       permissionStatus = await location.requestPermission();
       if (permissionStatus != PermissionStatus.granted) {
-        // TODO: show a dialog to the user to enable the location permission
-        return false;
+        throw LocationPermissionException();
       }
     }
-    return true;
   }
 
   void getRealTimeLocationData(
@@ -44,8 +40,21 @@ class LocationService {
 
       /// means > send the location data every 2 meters
     );
+    await checkAndRequestLocationService();
+    await checkAndRequestLocationPermission();
 
     /// the stream works every 1 second(interval(frequency)) > every 1 second will look to the distanceFilter if was took 2 meters > send the location data, if not will look again after 1 second.
     location.onLocationChanged.listen(onData);
   }
+
+  /// get the current location without the stream
+  Future<LocationData> getCurrentLocation() async {
+    await checkAndRequestLocationService();
+    await checkAndRequestLocationPermission();
+    return await location.getLocation();
+  }
 }
+
+class LocationServiceException implements Exception {}
+
+class LocationPermissionException implements Exception {}

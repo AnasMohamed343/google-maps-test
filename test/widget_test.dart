@@ -9,11 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:google_maps_test/main.dart';
+import 'package:google_maps_test/route_tracking_app/route_tracking_app.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const GoogleMapTestApp());
+    await tester.pumpWidget(const RouteTrackingApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

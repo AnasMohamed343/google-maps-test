@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_test/route_tracking_app/views/google_map_view.dart';
+import 'package:google_maps_test/route_tracking_app/presentation/views/google_map_view.dart';
 
 class RouteTrackingApp extends StatelessWidget {
   const RouteTrackingApp({super.key});
@@ -8,7 +8,11 @@ class RouteTrackingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: GoogleMapView(),
+      home: Scaffold(
+          resizeToAvoidBottomInset: false,
+
+          /// to prevent the keyboard from covering the map
+          body: GoogleMapView()),
     );
   }
 }
