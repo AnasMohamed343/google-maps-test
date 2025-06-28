@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_test/route_tracking_app/core/services/google_maps_place_service.dart';
+import 'package:google_maps_test/route_tracking_app/core/services/map_services.dart';
+import 'package:google_maps_test/route_tracking_app/core/services/places_service.dart';
 import 'package:google_maps_test/route_tracking_app/data/api/models/place_autocomplete_model/place_autocomplete_model.dart';
 import 'package:google_maps_test/route_tracking_app/data/api/models/place_details_model/place_details_model.dart';
 
@@ -7,12 +8,12 @@ class AutoCompleteListView extends StatelessWidget {
   const AutoCompleteListView({
     super.key,
     required this.places,
-    required this.googleMapsPlaceService,
+    required this.mapServices,
     required this.onPlaceSelect,
   });
 
   final List<PlaceModel> places;
-  final GoogleMapsPlaceService googleMapsPlaceService;
+  final MapServices mapServices;
   final void Function(PlaceDetailsModel) onPlaceSelect;
 
   @override
@@ -34,9 +35,8 @@ class AutoCompleteListView extends StatelessWidget {
                   color: Colors.grey[600],
                 ),
                 onPressed: () async {
-                  var placeDetails =
-                      await googleMapsPlaceService.getPlaceDetails(
-                          placeId: places[index].placeId.toString());
+                  var placeDetails = await mapServices.getPlaceDetails(
+                      placeId: places[index].placeId.toString());
 
                   /// add a callback function, to achieve(and send) something from this widget to another widget.
                   onPlaceSelect(placeDetails);
