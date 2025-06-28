@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -20,9 +22,11 @@ class _GoogleMapViewState extends State<GoogleMapView> {
   late GoogleMapController googleMapController;
   late TextEditingController textEditingController;
   late Uuid uuid;
-  late LatLng currentLocation;
+  //late LatLng currentLocation;
   late LatLng destinationLocation;
   late MapServices mapServices;
+  Timer? debounce;
+  bool isFirstCall = true;
 
   ///
   String? sessionToken;
@@ -40,22 +44,26 @@ class _GoogleMapViewState extends State<GoogleMapView> {
   }
 
   void fetchPredictions() {
-    textEditingController.addListener(() async {
-      sessionToken ??= uuid.v4();
+    textEditingController.addListener(() {
+      if (debounce?.isActive ?? false) debounce?.cancel();
+      debounce = Timer(const Duration(milliseconds: 100), () async {
+        /// every time will wait 100 milliseconds before calling the logic inside the function(timer)
+        sessionToken ??= uuid.v4();
 
-      ///
-      /// to listen to text changes, every time i write something in the text field > i will call the logic in this function
-      await mapServices.getPredictions(
-          sessionToken: sessionToken!,
-          input: textEditingController.text,
-          places: places);
-      setState(() {});
+        /// to listen to text changes, every time i write something in the text field > i will call the logic in this function
+        await mapServices.getPredictions(
+            sessionToken: sessionToken!,
+            input: textEditingController.text,
+            places: places);
+        setState(() {});
+      });
     });
   }
 
   @override
   dispose() {
     textEditingController.dispose();
+    debounce?.cancel();
     super.dispose();
   }
 
@@ -116,7 +124,7 @@ class _GoogleMapViewState extends State<GoogleMapView> {
                               placeDetailsModel.geometry!.location!.lat!,
                               placeDetailsModel.geometry!.location!.lng!);
                           var points = await mapServices.getRouteData(
-                              currentLocation: currentLocation,
+                              //currentLocation: currentLocation,
                               destinationLocation: destinationLocation);
                           mapServices.displayRoute(points,
                               googleMapController: googleMapController,
@@ -130,11 +138,15 @@ class _GoogleMapViewState extends State<GoogleMapView> {
     );
   }
 
-  void updateCurrentLocation() async {
+  void updateCurrentLocation() {
     try {
-      currentLocation = await mapServices.updateCurrentLocation(
-          googleMapController: googleMapController, markers: markers);
-      setState(() {});
+      mapServices.updateCurrentLocation(
+          googleMapController: googleMapController,
+          markers: markers,
+          isFirstCall: isFirstCall,
+          onUpdateCurrentLocation: () {
+            setState(() {});
+          });
     } on LocationServiceException catch (e) {
     } on LocationPermissionException catch (e) {
     } catch (e) {}
@@ -145,3 +157,6 @@ class _GoogleMapViewState extends State<GoogleMapView> {
 // listen to the text field
 // search place
 // display results
+
+/// tasks
+///

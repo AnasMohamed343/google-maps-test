@@ -17,6 +17,7 @@ class MapServices {
   LocationService locationService = LocationService();
   PlacesService placesService = PlacesService();
   RoutesService routesService = RoutesService();
+  LatLng? currentLocation;
 
   /// when i going to create method that has logic take time(await), and this function not return anything, must make this function > Future<void> to make it await when calling it, to wait until the logic that take time inside it to finished first.
   Future<void> getPredictions(
@@ -35,13 +36,12 @@ class MapServices {
   }
 
   Future<List<LatLng>> getRouteData(
-      {required LatLng currentLocation,
-      required LatLng destinationLocation}) async {
+      {required LatLng destinationLocation}) async {
     LocationInfoModel origin = LocationInfoModel(
       location: LocationModel(
         latLng: LatLngModel(
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
+          latitude: currentLocation!.latitude,
+          longitude: currentLocation!.longitude,
         ),
       ),
     );
@@ -111,20 +111,46 @@ class MapServices {
     );
   }
 
-  Future<LatLng> updateCurrentLocation(
+  /// without stream
+  // Future<LatLng> updateCurrentLocation(
+  //     {required GoogleMapController googleMapController,
+  //     required Set<Marker> markers}) async {
+  //   var locationData = await locationService.getCurrentLocation();
+  //   var currentLocation =
+  //       LatLng(locationData.latitude!, locationData.longitude!);
+  //   Marker myLocationMarker = Marker(
+  //       markerId: const MarkerId('myLocation'), position: currentLocation);
+  //   CameraPosition myCurrentCameraPosition =
+  //       CameraPosition(target: currentLocation, zoom: 12);
+  //   googleMapController
+  //       .animateCamera(CameraUpdate.newCameraPosition(myCurrentCameraPosition));
+  //   markers.add(myLocationMarker);
+  //   return currentLocation;
+  // }
+
+  /// with stream
+  void updateCurrentLocation(
       {required GoogleMapController googleMapController,
-      required Set<Marker> markers}) async {
-    var locationData = await locationService.getCurrentLocation();
-    var currentLocation =
-        LatLng(locationData.latitude!, locationData.longitude!);
-    Marker myLocationMarker = Marker(
-        markerId: const MarkerId('myLocation'), position: currentLocation);
-    CameraPosition myCurrentCameraPosition =
-        CameraPosition(target: currentLocation, zoom: 12);
-    googleMapController
-        .animateCamera(CameraUpdate.newCameraPosition(myCurrentCameraPosition));
-    markers.add(myLocationMarker);
-    return currentLocation;
+      required Set<Marker> markers,
+      required Function onUpdateCurrentLocation,
+      required bool isFirstCall}) {
+    locationService.getRealTimeLocationData((locationData) {
+      currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
+      Marker myLocationMarker = Marker(
+          markerId: const MarkerId('myLocation'), position: currentLocation!);
+      if (isFirstCall) {
+        CameraPosition myCurrentCameraPosition =
+            CameraPosition(target: currentLocation!, zoom: 12);
+        googleMapController.animateCamera(
+            CameraUpdate.newCameraPosition(myCurrentCameraPosition));
+        isFirstCall = false;
+      } else {
+        googleMapController
+            .animateCamera(CameraUpdate.newLatLng(currentLocation!));
+      }
+      markers.add(myLocationMarker);
+      onUpdateCurrentLocation(); // setState(() {}); to update the UI
+    });
   }
 
   Future<PlaceDetailsModel> getPlaceDetails({required String placeId}) async {
